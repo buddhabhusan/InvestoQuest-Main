@@ -6,6 +6,7 @@ class PortfolioOptimizerForm(forms.Form):
     MODEL_CHOICES = [
         ('black_litterman', 'Black-Litterman Model'),
         ('risk_parity', 'Risk Parity'),
+        ('mean_variance', 'Mean Variance'),
     ]
 
     # Assume your file field is named 'returns_file'

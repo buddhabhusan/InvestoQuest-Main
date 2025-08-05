@@ -26,51 +26,40 @@ def portfolio_optimizer_view(request):
     Handles file upload, model selection, and displays optimization results.
     """
     if request.method == 'POST':
-        # Use the new form that includes the model choice dropdown
         form = PortfolioOptimizerForm(request.POST, request.FILES)
-        if form.is_valid():
-            # Get data from the validated form
-            selected_model = form.cleaned_data['model_choice']
-            returns_file = form.cleaned_data['returns_file']
-            
-            try:
-                # Read the uploaded CSV file with pandas
-                df = pd.read_csv(returns_file)
-                
-                # --- ADD YOUR MODEL LOGIC HERE ---
-                # Based on the user's choice, run the appropriate model.
-                # The result should be stored in the 'results_html' variable.
-                
-                if selected_model == 'mean_variance':
-                    # Call your mean-variance function with the dataframe 'df'
-                    # results_html = your_mean_variance_function(df)
-                    results_html = df.head().to_html(classes='table-auto w-full text-left whitespace-no-wrap') + "<p class='mt-2 font-bold'>Processed with Mean-Variance.</p>"
+    if form.is_valid():
+        selected_model = form.cleaned_data['model_choice']
+        returns_file = form.cleaned_data['returns_file']
 
-                elif selected_model == 'risk_parity':
-                    # Call your risk_parity function with 'df'
-                    # results_html = your_risk_parity_function(df)
-                    results_html = df.head().to_html(classes='table-auto w-full text-left whitespace-no-wrap') + "<p class='mt-2 font-bold'>Processed with Risk Parity.</p>"
+        try:
+            df = pd.read_csv(returns_file, index_col="Date", parse_dates=True)
 
-                else:
-                    results_html = "<p>Selected model not recognized.</p>"
+            if selected_model == 'mean_variance':
+                from .mean_variance_optimizer import analyze_portfolio
+                results_html = analyze_portfolio(df)
 
-                return render(request, 'optimizer/portfolio_optimizer.html', {
-                    'form': form,
-                    'optimization_results': results_html
-                })
+            elif selected_model == 'risk_parity':
+                results_html = df.head().to_html(classes='table-auto w-full text-left whitespace-no-wrap') + "<p class='mt-2 font-bold'>Processed with Risk Parity.</p>"
 
-            except Exception as e:
-                # Handle potential errors in file reading or processing
-                error_message = f"Error processing file: {e}"
-                return render(request, 'optimizer/portfolio_optimizer.html', {
-                    'form': form,
-                    'error_message': error_message
-                })
+            else:
+                results_html = "<p>Selected model not recognized.</p>"
+
+            return render(request, 'optimizer/portfolio_optimizer.html', {
+                'form': form,
+                'optimization_results': results_html
+            })
+
+        except Exception as e:
+            error_message = f"Error processing file: {e}"
+            return render(request, 'optimizer/portfolio_optimizer.html', {
+                'form': form,
+                'error_message': error_message
+            })
     else:
-        # For a GET request, just display a blank form
         form = PortfolioOptimizerForm()
 
     return render(request, 'optimizer/portfolio_optimizer.html', {'form': form})
+
 
 @login_required
 def about_us_view(request):
